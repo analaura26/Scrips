@@ -1,0 +1,95 @@
+#!/bin/bash
+NAME="Respaldo"
+DB_NAME="FEIWASH"
+DB_USER=admin
+DB_PASSWD="admin2022"
+# DB_MY_CNF=/usr/bin/databases/.my.cnf
+DATE=$(date +"%d%m%y%H%M")
+FILE_NAME=${NAME}${DB_NAME}${DATE}
+NFS_IP=192.168.100.107
+NFS_FOLDER="/Respaldo"
+NFS_USER="admin"
+NFS_PASSWD="admin2022"
+SHARE_MOUNT_DIR=/mnt/Respaldo
+MAIL_DEST="neme9@hotmail.com"
+CNF_FILE=/etc/mysql/my.cnf
+#CNF_BACKUP_NAME=my.cnf.${DATE}.backup
+MAIL_MSG="El backup se ha generado con éxito y se encuentra actualmente en el recurso compartido"
+
+
+
+generate(){
+echo "Generando backup del esquema"
+FILE_NAME=${NAME}${DB_NAME}${DATE}.sql
+mysqldump -u$DB_USER -p$DB_PASSWD $DB_NAME > $FILE_NAME
+}
+
+
+
+make_dir(){
+if [[ -d $SHARE_MOUNT_DIR ]] ; then
+echo "Directorio para recursos compartidos existe."
+else
+sudo mkdir $SHARE_MOUNT_DIR
+echo "Directorio de recursos compartido creado."
+fi
+}
+
+
+
+mount_shared(){
+if ! df | grep -i $NFS_IP &>/dev/null ; then
+echo "Montando recurso compartido..."
+sudo mount -t nfs ${NFS_FOLDER}:${NFS_FOLDER} ${SHARE_MOUNT-DIR}
+else
+echo "El recurso compartido ya se encuentra montado"
+}
+
+
+
+copy(){
+echo "Copiando backup a recurso compartido..."
+if cp $FILE_NAME $SHARE_MOUNT_DIR -f ; then
+rm $FILE_NAME
+fi
+}
+
+
+
+autenthic(){
+if [[ -f ${SHARE_MOUNT_DIR}/${FILE_NAME} ]] ; then
+echo "El repaldo se ha hecho correctamente"
+Telegram;
+else
+echo "El Respaldo no se encuntra en el mount"
+fi
+}
+
+
+
+#correo(){
+# sender="proyectos2022fei@gmail.com"
+# reciver="nemegera999@gmail.com"
+# gapp="fei12345"
+#
+# sub="Confirmacion de Respaldo ${Date}"
+# body="hola1234"
+#
+# curl -s --url 'smtps://smtp.gmail.com:465' --ssl-reqd \
+# --mail-from $sender \
+# --mail-rcpt $reciever\
+# --user $sender:$gapp -T ${body}
+#}
+Telegram(){
+TOKEN="1393690323:AAETCd6ePXEYwbl2qs-eCAU6nA_iobsFi24"
+ID="1391120375"
+MENSAJE=""
+URL="https://api.telegram.org/bot$TOKEN/sendMessage"
+MENSAJE="El archivo se respaldado de manera correcta con el nombre ${FILE_NAME}"
+curl --silent --output /dev/null $URL -d chat_id=$ID -d text="$MENSAJE"
+}
+generate;
+make_dir;
+mount_shared;
+copy;
+autenthic;
